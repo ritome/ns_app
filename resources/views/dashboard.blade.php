@@ -1,150 +1,150 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="py-8 px-4 sm:px-6">
-        <!-- ステータスサマリー -->
-        <div class="mb-8">
-            <h1 class="text-xl font-semibold text-gray-900">{{ Auth::user()->full_name }} さん</h1>
-            <p class="mt-1 text-sm text-gray-600">入職から {{ Auth::user()->hire_date->diffInDays(now()) }} 日目</p>
-        </div>
-
-        <!-- プログレスカード -->
-        <div class="mb-12 bg-white rounded-lg shadow-sm border border-gray-200">
-            <div class="p-6">
-                <div class="flex items-center justify-between mb-6">
-                    <div>
-                        <h2 class="text-base font-medium text-gray-900">育成プログラムの進捗</h2>
-                        <p class="mt-1 text-sm text-gray-500">必須経験項目の達成状況</p>
-                    </div>
-                    <span
-                        class="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700">
-                        25% 完了
-                    </span>
+    <div class="py-12 px-6 sm:px-8 max-w-7xl mx-auto">
+        <!-- 看護職員情報 -->
+        <div class="mb-12">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="px-8 py-6 bg-emerald-50/50 border-b border-emerald-100">
+                    <h2 class="text-xl font-medium text-emerald-900">看護職員情報</h2>
                 </div>
+                <div class="px-8 py-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div>
+                            <div class="text-sm text-gray-500">職員ID</div>
+                            <div class="mt-1 text-lg font-medium text-gray-900">{{ Auth::user()->employee_id }}</div>
+                        </div>
+                        <div>
+                            <div class="text-sm text-gray-500">氏名</div>
+                            <div class="mt-1 text-lg font-medium text-gray-900">{{ Auth::user()->full_name }}</div>
+                        </div>
+                        <div>
+                            <div class="text-sm text-gray-500">役職</div>
+                            <div class="mt-1 text-lg font-medium text-gray-900">
+                                @switch(Auth::user()->role)
+                                    @case('new_nurse')
+                                        新入看護職員
+                                    @break
 
-                <div class="space-y-4">
-                    <div>
-                        <div class="flex items-center justify-between text-sm mb-1">
-                            <span class="font-medium text-gray-900">基本ケア</span>
-                            <span class="text-gray-500">8/10 完了</span>
-                        </div>
-                        <div class="w-full bg-gray-100 rounded-full h-1.5">
-                            <div class="bg-blue-600 h-1.5 rounded-full" style="width: 80%"></div>
-                        </div>
-                    </div>
+                                    @case('partner_nurse')
+                                        パートナー看護師
+                                    @break
 
-                    <div>
-                        <div class="flex items-center justify-between text-sm mb-1">
-                            <span class="font-medium text-gray-900">医療安全</span>
-                            <span class="text-gray-500">3/8 完了</span>
-                        </div>
-                        <div class="w-full bg-gray-100 rounded-full h-1.5">
-                            <div class="bg-blue-600 h-1.5 rounded-full" style="width: 37.5%"></div>
-                        </div>
-                    </div>
+                                    @case('educator')
+                                        教育係
+                                    @break
 
-                    <div>
-                        <div class="flex items-center justify-between text-sm mb-1">
-                            <span class="font-medium text-gray-900">感染対策</span>
-                            <span class="text-gray-500">2/6 完了</span>
-                        </div>
-                        <div class="w-full bg-gray-100 rounded-full h-1.5">
-                            <div class="bg-blue-600 h-1.5 rounded-full" style="width: 33.3%"></div>
-                        </div>
-                    </div>
-                </div>
+                                    @case('chief')
+                                        主任
+                                    @break
 
-                <div class="mt-6">
-                    <a href="{{ route('program-checks.index') }}"
-                        class="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-500">
-                        詳しく見る
-                        <svg class="ml-1 w-4 h-4" viewBox="0 0 16 16" fill="currentColor">
-                            <path fill-rule="evenodd"
-                                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z" />
-                        </svg>
-                    </a>
-                </div>
-            </div>
-        </div>
+                                    @case('manager_safety')
+                                        課長（医療安全）
+                                    @break
 
-        <!-- アクションカード -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- 次の予定 -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h2 class="text-base font-medium text-gray-900 mb-4">次の予定</h2>
-                <div class="space-y-4">
-                    <div class="flex items-start">
-                        <div class="flex-shrink-0">
-                            <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-50">
-                                <svg class="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M11.35 3.836c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V19.5a2.25 2.25 0 002.25 2.25h.75" />
-                                </svg>
-                            </span>
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-900">1ヶ月目振り返り</p>
-                            <p class="mt-1 text-xs text-gray-500">8月17日（木）まで</p>
-                        </div>
-                    </div>
+                                    @case('manager_infection')
+                                        課長（感染制御）
+                                    @break
 
-                    <div class="flex items-start">
-                        <div class="flex-shrink-0">
-                            <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-50">
-                                <svg class="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
-                                </svg>
-                            </span>
+                                    @case('manager_hrd')
+                                        課長（人材育成）
+                                    @break
+
+                                    @case('director')
+                                        部長
+                                    @break
+
+                                    @default
+                                        {{ Auth::user()->role }}
+                                @endswitch
+                            </div>
                         </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-900">医療安全研修</p>
-                            <p class="mt-1 text-xs text-gray-500">8月21日（月）10:00-</p>
+                        <div>
+                            <div class="text-sm text-gray-500">入職日</div>
+                            <div class="mt-1 text-lg font-medium text-gray-900">
+                                {{ Auth::user()->hire_date->format('Y年n月j日') }}</div>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- 最近の記録 -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-base font-medium text-gray-900">最近の記録</h2>
-                    <a href="#" class="text-sm text-blue-600 hover:text-blue-500">すべて見る</a>
-                </div>
-                <div class="space-y-4">
-                    <div class="flex items-start">
-                        <div class="flex-shrink-0">
-                            <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-indigo-50">
-                                <svg class="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-                                </svg>
-                            </span>
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-900">日々の振り返りを記録しました</p>
-                            <p class="mt-1 text-xs text-gray-500">2時間前</p>
+        <!-- メニュー -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            <!-- 育成プログラム -->
+            <a href="{{ route('program-checks.index') }}" class="block">
+                <div
+                    class="h-full bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:bg-gray-50/50 transition-colors">
+                    <div class="px-8 py-6 bg-indigo-50/50 border-b border-indigo-100">
+                        <div class="flex items-center gap-x-3">
+                            <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                            </svg>
+                            <h2 class="text-xl font-medium text-indigo-900">育成プログラム</h2>
                         </div>
                     </div>
-
-                    <div class="flex items-start">
-                        <div class="flex-shrink-0">
-                            <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-50">
-                                <svg class="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                                </svg>
-                            </span>
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-900">清潔ケアの研修を完了しました</p>
-                            <p class="mt-1 text-xs text-gray-500">昨日</p>
-                        </div>
+                    <div class="px-8 py-6">
+                        <p class="text-base text-gray-600">必須経験項目のチェックリストで、あなたの成長を可視化します。</p>
                     </div>
                 </div>
+            </a>
+
+            <!-- 振り返りシート -->
+            <a href="{{ route('reviews.index') }}" class="block">
+                <div
+                    class="h-full bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:bg-gray-50/50 transition-colors">
+                    <div class="px-8 py-6 bg-pink-50/50 border-b border-pink-100">
+                        <div class="flex items-center gap-x-3">
+                            <svg class="w-6 h-6 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                            <h2 class="text-xl font-medium text-pink-900">振り返りシート</h2>
+                        </div>
+                    </div>
+                    <div class="px-8 py-6">
+                        <p class="text-base text-gray-600">節目ごとの振り返りを記録し、上司からのフィードバックを受けられます。</p>
+                    </div>
+                </div>
+            </a>
+
+            <!-- 日々の振り返り -->
+            <a href="{{ route('daily-notes.index') }}" class="block">
+                <div
+                    class="h-full bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:bg-gray-50/50 transition-colors">
+                    <div class="px-8 py-6 bg-teal-50/50 border-b border-teal-100">
+                        <div class="flex items-center gap-x-3">
+                            <svg class="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <h2 class="text-xl font-medium text-teal-900">日々の振り返り</h2>
+                        </div>
+                    </div>
+                    <div class="px-8 py-6">
+                        <p class="text-base text-gray-600">毎日の実施内容や気づきを記録し、指導者からのコメントを受けられます。</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- 最近の活動 -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="px-8 py-6 bg-gray-50/50 border-b border-gray-200">
+                <h2 class="text-xl font-medium text-gray-900">最近の活動</h2>
+            </div>
+            <div class="divide-y divide-gray-200">
+                @forelse([] as $activity)
+                    <div class="px-8 py-6">
+                        <div class="text-base text-gray-900">{{ $activity->description }}</div>
+                        <div class="mt-1 text-sm text-gray-500">{{ $activity->created_at->diffForHumans() }}</div>
+                    </div>
+                @empty
+                    <div class="px-8 py-6 text-base text-gray-600">
+                        最近の活動はありません
+                    </div>
+                @endforelse
             </div>
         </div>
     </div>

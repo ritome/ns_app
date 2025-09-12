@@ -1,124 +1,132 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="px-6" id="program-checks-container">
-        <div class="mb-6">
-            <div class="flex items-center gap-3 mb-2">
-                <h1 class="text-lg font-semibold text-slate-900">育成プログラムチェックリスト</h1>
-                <span
-                    class="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-sm font-medium text-emerald-800">
-                    必須項目
-                </span>
-            </div>
-            <p class="text-sm text-slate-600">必須経験項目の達成状況を管理します</p>
-        </div>
+    <div class="py-12">
+        <div class="max-w-5xl mx-auto sm:px-6 lg:px-8">
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6 text-gray-900">
+                    <h1 class="text-2xl font-semibold text-gray-900 mb-8">育成プログラム</h1>
 
-        <!-- カテゴリーフィルター -->
-        <div class="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-lg shadow-sm mb-6 border border-emerald-100">
-            <div class="p-4 border-b border-emerald-100">
-                <h2 class="text-base font-semibold text-emerald-900">カテゴリーフィルター</h2>
-            </div>
-            <div class="p-4 flex flex-wrap gap-2">
-                <a href="{{ route('program-checks.index') }}"
-                    class="inline-flex items-center px-4 py-2 rounded-lg text-sm {{ !$selectedCategory ? 'bg-emerald-100 text-emerald-900 ring-1 ring-emerald-200 font-medium' : 'bg-white text-slate-700 hover:bg-emerald-50 ring-1 ring-slate-200' }}">
-                    全て
-                </a>
-                @foreach ($categories as $category)
-                    <a href="{{ route('program-checks.index', ['category' => $category]) }}"
-                        class="inline-flex items-center px-4 py-2 rounded-lg text-sm {{ $selectedCategory === $category ? 'bg-emerald-100 text-emerald-900 ring-1 ring-emerald-200 font-medium' : 'bg-white text-slate-700 hover:bg-emerald-50 ring-1 ring-slate-200' }}">
-                        {{ $category }}
-                    </a>
-                @endforeach
-            </div>
-        </div>
-
-        <!-- チェックリスト -->
-        <div class="space-y-6">
-            @foreach ($items as $category => $categoryItems)
-                @php
-                    $total = $categoryItems->count();
-                    $completed = $categoryItems
-                        ->filter(fn($item) => $item->checks->first()?->checked_at !== null)
-                        ->count();
-                    $percentage = $total > 0 ? round(($completed / $total) * 100, 1) : 0;
-                @endphp
-
-                <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
-                    <div class="p-5 border-b border-slate-200 bg-gradient-to-br from-slate-50 to-slate-100/50">
-                        <div class="flex justify-between items-center mb-3">
-                            <h2 class="text-base font-semibold text-slate-900">{{ $category }}</h2>
-                            <div class="flex items-center gap-2">
-                                <span
-                                    class="text-sm text-emerald-700 font-medium">{{ $completed }}/{{ $total }}</span>
-                                <span class="text-sm text-emerald-700 font-medium">{{ $percentage }}%</span>
-                            </div>
+                    <!-- 進捗バー -->
+                    <div class="mb-8">
+                        <div class="flex items-center justify-between text-sm text-gray-600 mb-2">
+                            <span>達成状況</span>
+                            <span id="progress-text">{{ $checkedCount }}/{{ $totalCount }}</span>
                         </div>
-                        <div class="w-full bg-white rounded-full h-2.5 p-0.5 border border-slate-200">
-                            <div class="bg-gradient-to-r from-emerald-500 to-teal-500 h-1.5 rounded-full transition-all duration-500"
+                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                            <div id="progress-bar" class="bg-emerald-600 h-2.5 rounded-full"
                                 style="width: {{ $percentage }}%"></div>
                         </div>
                     </div>
 
-                    <div class="divide-y divide-slate-100">
-                        @foreach ($categoryItems as $item)
-                            <div class="p-4 hover:bg-slate-50 transition-colors">
-                                <div class="flex items-start">
-                                    <form action="{{ route('program-checks.toggle', $item) }}" method="POST"
-                                        class="flex-shrink-0 pt-1" data-turbo="false">
-                                        @csrf
-                                        <button type="submit"
-                                            class="focus:outline-none focus:ring-2 focus:ring-emerald-500 rounded p-0.5">
-                                            <span class="block w-5 h-5 border-2 border-slate-400">
-                                                @if ($item->checks->first()?->checked_at)
-                                                    <svg class="w-4 h-4 text-emerald-600" viewBox="0 0 20 20"
-                                                        fill="currentColor">
-                                                        <path fill-rule="evenodd"
-                                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                                            clip-rule="evenodd" />
-                                                    </svg>
+                    <!-- カテゴリフィルター -->
+                    <div class="flex flex-wrap gap-2 mb-8">
+                        <button type="button"
+                            class="px-4 py-2 text-sm font-medium rounded-full {{ $selectedCategory === null ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}"
+                            onclick="window.location.href='{{ route('program-checks.index') }}'">
+                            すべて
+                        </button>
+                        @foreach ($categories as $category)
+                            <button type="button"
+                                class="px-4 py-2 text-sm font-medium rounded-full {{ $selectedCategory === $category ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}"
+                                onclick="window.location.href='{{ route('program-checks.index', ['category' => $category]) }}'">
+                                {{ $category }}
+                            </button>
+                        @endforeach
+                    </div>
+
+                    <!-- チェックリスト -->
+                    <div class="space-y-8">
+                        @foreach ($groupedItems as $category => $items)
+                            <div class="border rounded-lg overflow-hidden">
+                                <h2 class="bg-emerald-50/50 px-6 py-4 text-lg font-medium text-emerald-900 border-b">
+                                    {{ $category }}
+                                </h2>
+                                <div class="divide-y">
+                                    @foreach ($items as $item)
+                                        <div class="px-6 py-4 flex items-start gap-x-4">
+                                            <div class="mt-1">
+                                                <button type="button" onclick="toggleCheck({{ $item->id }})"
+                                                    class="w-5 h-5 rounded border border-gray-300 flex items-center justify-center {{ $item->isChecked() ? 'bg-emerald-600 border-emerald-600' : 'hover:border-emerald-600' }}"
+                                                    id="check-{{ $item->id }}">
+                                                    @if ($item->isChecked())
+                                                        <svg class="w-3.5 h-3.5 text-white" viewBox="0 0 20 20"
+                                                            fill="currentColor">
+                                                            <path fill-rule="evenodd"
+                                                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                                                clip-rule="evenodd" />
+                                                        </svg>
+                                                    @endif
+                                                </button>
+                                            </div>
+                                            <div class="flex-1 leading-relaxed">
+                                                <p class="text-gray-900">{{ $item->name }}</p>
+                                                @if ($item->description)
+                                                    <p class="mt-1 text-sm text-gray-500">{{ $item->description }}</p>
                                                 @endif
-                                            </span>
-                                        </button>
-                                    </form>
-                                    <div class="ml-4 flex-1">
-                                        <div class="flex items-center justify-between">
-                                            <h3 class="text-base font-medium text-slate-900">{{ $item->name }}</h3>
-                                            @if ($item->checks->first()?->checked_at)
-                                                <span class="text-sm text-emerald-700">
-                                                    {{ $item->checks->first()->checked_at->format('Y年n月j日') }} 達成
-                                                </span>
-                                            @endif
+                                                <p class="mt-2 text-sm text-emerald-600" id="date-{{ $item->id }}"
+                                                    style="{{ $item->isChecked() ? '' : 'display: none;' }}">
+                                                    達成日: {{ $item->checked_at ? $item->checked_at->format('Y年n月j日') : '' }}
+                                                </p>
+                                            </div>
                                         </div>
-                                        @if ($item->description)
-                                            <p class="mt-1 text-sm text-slate-600">{{ $item->description }}</p>
-                                        @endif
-                                    </div>
+                                    @endforeach
                                 </div>
                             </div>
                         @endforeach
                     </div>
                 </div>
-            @endforeach
+            </div>
         </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // フォーム送信時のスクロール位置を保持
-            const forms = document.querySelectorAll('form[data-turbo="false"]');
-            forms.forEach(form => {
-                form.addEventListener('submit', function() {
-                    // 現在のスクロール位置をセッションストレージに保存
-                    sessionStorage.setItem('scrollPosition', window.scrollY);
-                });
-            });
+    @push('scripts')
+        <script>
+            async function toggleCheck(itemId) {
+                try {
+                    const response = await fetch(`/program-checks/toggle/${itemId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        }
+                    });
 
-            // ページロード時に保存されたスクロール位置を復元
-            const savedScrollPosition = sessionStorage.getItem('scrollPosition');
-            if (savedScrollPosition) {
-                window.scrollTo(0, savedScrollPosition);
-                sessionStorage.removeItem('scrollPosition');
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+
+                    const data = await response.json();
+                    const checkButton = document.getElementById(`check-${itemId}`);
+                    const dateText = document.getElementById(`date-${itemId}`);
+                    const progressBar = document.getElementById('progress-bar');
+                    const progressText = document.getElementById('progress-text');
+
+                    // チェックボックスの状態を更新
+                    if (data.checked) {
+                        checkButton.classList.add('bg-emerald-600', 'border-emerald-600');
+                        checkButton.innerHTML = `
+                <svg class="w-3.5 h-3.5 text-white" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                </svg>
+            `;
+                        dateText.textContent = `達成日: ${data.checked_at}`;
+                        dateText.style.display = '';
+                    } else {
+                        checkButton.classList.remove('bg-emerald-600', 'border-emerald-600');
+                        checkButton.innerHTML = '';
+                        dateText.style.display = 'none';
+                    }
+
+                    // 進捗バーを更新
+                    progressBar.style.width = `${data.percentage}%`;
+                    progressText.textContent = `${data.checked_count}/${data.total_count}`;
+
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('エラーが発生しました。ページをリロードしてください。');
+                }
             }
-        });
-    </script>
+        </script>
+    @endpush
 @endsection

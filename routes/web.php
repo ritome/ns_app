@@ -1,39 +1,83 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProgramCheckController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\DailyNoteController;
+use App\Http\Controllers\ProfileController;
+use Illuminate\Support\Facades\Route;
 
-// ホーム（認証済みの場合はダッシュボードへ）
-Route::redirect('/', '/dashboard');
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register web routes for your application. These
+| routes are loaded by the RouteServiceProvider and all of them will
+| be assigned to the "web" middleware group. Make something great!
+|
+*/
 
-// 認証（ゲストのみアクセス可能）
-Route::middleware('guest')->group(function () {
-    Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
-    Route::post('login', [LoginController::class, 'login']);
+Route::get('/', function () {
+    return view('welcome');
 });
 
-// 認証済みユーザー
-Route::middleware('auth')->group(function () {
-    Route::post('logout', [LoginController::class, 'logout'])->name('logout');
-
+Route::middleware(['auth'])->group(function () {
     // ダッシュボード
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])
+        ->name('dashboard');
 
-    // 育成プログラム
-    Route::get('/program-checks', [ProgramCheckController::class, 'index'])->name('program-checks.index');
-    Route::post('/program-checks/{item}/toggle', [ProgramCheckController::class, 'toggle'])->name('program-checks.toggle');
+    // プロフィール
+    Route::get('/profile', [ProfileController::class, 'edit'])
+        ->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])
+        ->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])
+        ->name('profile.destroy');
+
+    // 育成プログラム（チェックリスト）
+    Route::prefix('program-checks')->name('program-checks.')->group(function () {
+        Route::get('/', [ProgramCheckController::class, 'index'])
+            ->name('index');
+        Route::post('/toggle/{program_item}', [ProgramCheckController::class, 'toggle'])
+            ->name('toggle');
+    });
 
     // 振り返りシート
-    Route::get('/reviews', [ReviewController::class, 'index'])->name('reviews.index');
-    Route::get('/reviews/create', [ReviewController::class, 'create'])->name('reviews.create');
-    Route::post('/reviews', [ReviewController::class, 'store'])->name('reviews.store');
-    Route::get('/reviews/{review}', [ReviewController::class, 'show'])->name('reviews.show');
+    Route::prefix('reviews')->name('reviews.')->group(function () {
+        Route::get('/', [ReviewController::class, 'index'])
+            ->name('index');
+        Route::get('/create', [ReviewController::class, 'create'])
+            ->name('create');
+        Route::post('/', [ReviewController::class, 'store'])
+            ->name('store');
+        Route::get('/{review}', [ReviewController::class, 'show'])
+            ->name('show');
+        Route::get('/{review}/edit', [ReviewController::class, 'edit'])
+            ->name('edit');
+        Route::put('/{review}', [ReviewController::class, 'update'])
+            ->name('update');
+        Route::post('/{review}/submit', [ReviewController::class, 'submit'])
+            ->name('submit');
+        Route::post('/{review}/approve', [ReviewController::class, 'approve'])
+            ->name('approve');
+        Route::post('/{review}/reject', [ReviewController::class, 'reject'])
+            ->name('reject');
+    });
 
     // 日々の振り返り
-    Route::get('/daily-notes', [DailyNoteController::class, 'index'])->name('daily-notes.index');
-    Route::post('/daily-notes', [DailyNoteController::class, 'store'])->name('daily-notes.store');
+    Route::prefix('daily-notes')->name('daily-notes.')->group(function () {
+        Route::get('/', [DailyNoteController::class, 'index'])
+            ->name('index');
+        Route::get('/create', [DailyNoteController::class, 'create'])
+            ->name('create');
+        Route::post('/', [DailyNoteController::class, 'store'])
+            ->name('store');
+        Route::get('/{dailyNote}', [DailyNoteController::class, 'show'])
+            ->name('show');
+        Route::get('/{dailyNote}/edit', [DailyNoteController::class, 'edit'])
+            ->name('edit');
+        Route::put('/{dailyNote}', [DailyNoteController::class, 'update'])
+            ->name('update');
+    });
 });
