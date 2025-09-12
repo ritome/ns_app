@@ -11,35 +11,50 @@ class ProgramCheckController extends Controller
 {
     public function index(Request $request)
     {
-        $items = ProgramItem::with(['checks' => function ($query) {
-            $query->where('user_id', Auth::id());
-        }])
-            ->byCategory($request->category)
-            ->ordered()
+        $query = ProgramItem::query()
+            ->with(['checks' => function ($query) {
+                $query->where('user_id', Auth::id());
+            }]);
+
+        if ($request->has('category')) {
+            $query->where('category', $request->category);
+        }
+
+        $items = $query->orderBy('category')
+            ->orderBy('sort_order')
+            ->orderBy('id')
             ->get()
             ->groupBy('category');
 
-        $categories = ProgramItem::distinct()->pluck('category');
+        $categories = ProgramItem::query()
+            ->select('category')
+            ->distinct()
+            ->pluck('category');
 
-        return view('program-checks.index', compact('items', 'categories'));
+        return view('program-checks.index', [
+            'items' => $items,
+            'categories' => $categories,
+            'selectedCategory' => $request->category
+        ]);
     }
 
     public function toggle(Request $request, ProgramItem $item)
     {
-        $check = ProgramCheck::firstOrNew([
-            'user_id' => Auth::id(),
-            'program_item_id' => $item->id,
-        ]);
+        $check = ProgramCheck::where('user_id', Auth::id())
+            ->where('program_item_id', $item->id)
+            ->first();
 
-        if ($check->exists && $check->checked_at) {
-            $check->checked_at = null;
+        if ($check) {
+            $check->checked_at = $check->checked_at ? null : now();
+            $check->save();
         } else {
-            $check->checked_at = now();
+            ProgramCheck::create([
+                'user_id' => Auth::id(),
+                'program_item_id' => $item->id,
+                'checked_at' => now(),
+            ]);
         }
 
-        $check->note = $request->note;
-        $check->save();
-
-        return back()->with('success', '更新しました。');
+        return back()->with('success', '更新しました');
     }
 }
