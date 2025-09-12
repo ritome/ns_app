@@ -1,0 +1,68 @@
+[90m= [39m[34;4mIlluminate\Database\Eloquent\Collection[39;24m {#545
+    [34mall[39m: [
+      [34;4mApp\Models\User[39;24m {#6447
+        [34mid[39m: [35m1[39m,
+        [34memployee_id[39m: "[32mN0001[39m",
+        [34memail[39m: "[32mnew1@example.com[39m",
+        [34mfull_name[39m: "[32m新入 看護[39m",
+        [34mrole[39m: "[32mnew_nurse[39m",
+      },
+      [34;4mApp\Models\User[39;24m {#6448
+        [34mid[39m: [35m2[39m,
+        [34memployee_id[39m: "[32mN0002[39m",
+        [34memail[39m: "[32mnew2@example.com[39m",
+        [34mfull_name[39m: "[32m新人 二郎[39m",
+        [34mrole[39m: "[32mnew_nurse[39m",
+      },
+      [34;4mApp\Models\User[39;24m {#6449
+        [34mid[39m: [35m3[39m,
+        [34memployee_id[39m: "[32mP0001[39m",
+        [34memail[39m: "[32mpartner@example.com[39m",
+        [34mfull_name[39m: "[32m相方 花子[39m",
+        [34mrole[39m: "[32mpartner_nurse[39m",
+      },
+      [34;4mApp\Models\User[39;24m {#6450
+        [34mid[39m: [35m4[39m,
+        [34memployee_id[39m: "[32mE0001[39m",
+        [34memail[39m: "[32meducator@example.com[39m",
+        [34mfull_name[39m: "[32m教育 太郎[39m",
+        [34mrole[39m: "[32meducator[39m",
+      },
+      [34;4mApp\Models\User[39;24m {#6451
+        [34mid[39m: [35m5[39m,
+        [34memployee_id[39m: "[32mC0001[39m",
+        [34memail[39m: "[32mchief@example.com[39m",
+        [34mfull_name[39m: "[32m主任 一郎[39m",
+        [34mrole[39m: "[32mchief[39m",
+      },
+      [34;4mApp\Models\User[39;24m {#6452
+        [34mid[39m: [35m6[39m,
+        [34memployee_id[39m: "[32mM1001[39m",
+        [34memail[39m: "[32mmgr_safety@example.com[39m",
+        [34mfull_name[39m: "[32m課長 安全[39m",
+        [34mrole[39m: "[32mmanager_safety[39m",
+      },
+      [34;4mApp\Models\User[39;24m {#6453
+        [34mid[39m: [35m7[39m,
+        [34memployee_id[39m: "[32mM1002[39m",
+        [34memail[39m: "[32mmgr_infection@example.com[39m",
+        [34mfull_name[39m: "[32m課長 感染[39m",
+        [34mrole[39m: "[32mmanager_infection[39m",
+      },
+      [34;4mApp\Models\User[39;24m {#6454
+        [34mid[39m: [35m8[39m,
+        [34memployee_id[39m: "[32mM1003[39m",
+        [34memail[39m: "[32mmgr_hrd@example.com[39m",
+        [34mfull_name[39m: "[32m課長 人材[39m",
+        [34mrole[39m: "[32mmanager_hrd[39m",
+      },
+      [34;4mApp\Models\User[39;24m {#6455
+        [34mid[39m: [35m9[39m,
+        [34memployee_id[39m: "[32mD0001[39m",
+        [34memail[39m: "[32mdirector@example.com[39m",
+        [34mfull_name[39m: "[32m部長 太郎[39m",
+        [34mrole[39m: "[32mdirector[39m",
+      },
+    ],
+  }
+
