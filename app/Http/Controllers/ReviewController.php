@@ -6,45 +6,67 @@ use App\Models\Milestone;
 use App\Models\Review;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class ReviewController extends Controller
 {
+    use AuthorizesRequests;
+
     /**
      * 振り返りシート一覧を表示
      */
     public function index()
     {
-        $user = Auth::user();
+        // マイルストーン一覧を取得（関連するレビューも含めて）
+        $milestones = Milestone::with(['review' => function ($query) {
+            $query->where('user_id', Auth::id());
+        }])->orderBy('days_after')->get();
 
-        // マイルストーン一覧を取得（入職日からの日数でフィルタリング）
-        $milestones = Milestone::all()
-            ->filter(function ($milestone) use ($user) {
-                return $user->hire_date->addDays($milestone->days_after)->isPast();
-            })
-            ->sortBy('days_after');
+        // 次に作成すべきマイルストーンを特定
+        $nextMilestone = $milestones->first(function ($milestone) {
+            return !$milestone->hasReview();
+        });
 
-        // 各マイルストーンに対応するレビューを取得
-        $reviews = Review::where('user_id', $user->id)
-            ->with(['milestone', 'approvals.approver'])
-            ->get()
-            ->keyBy('milestone_id');
+        // 完了率を計算（作成済み / 全体）
+        $totalMilestones = $milestones->count();
+        $completedMilestones = $milestones->filter(function ($milestone) {
+            return $milestone->hasReview();
+        })->count();
 
-        return view('reviews.index', [
-            'milestones' => $milestones,
-            'reviews' => $reviews,
-        ]);
+        $completionRate = $totalMilestones > 0
+            ? round(($completedMilestones / $totalMilestones) * 100)
+            : 0;
+
+        // 承認率を計算（承認済み / 作成済み）
+        $approvedMilestones = $milestones->filter(function ($milestone) {
+            return $milestone->hasReview() && $milestone->review->isApproved();
+        })->count();
+
+        $approvalRate = $completedMilestones > 0
+            ? round(($approvedMilestones / $completedMilestones) * 100)
+            : 0;
+
+        return view('reviews.index', compact(
+            'milestones',
+            'nextMilestone',
+            'completionRate',
+            'approvalRate'
+        ));
     }
 
     /**
-     * 新規振り返りシートを作成
+     * 新規作成フォームを表示
      */
     public function create(Request $request)
     {
         $milestone = Milestone::findOrFail($request->milestone_id);
 
-        return view('reviews.create', [
-            'milestone' => $milestone,
-        ]);
+        // すでにレビューが存在する場合は編集画面にリダイレクト
+        if ($milestone->hasReview()) {
+            return redirect()->route('reviews.edit', $milestone->review);
+        }
+
+        return view('reviews.create', compact('milestone'));
     }
 
     /**
@@ -54,112 +76,181 @@ class ReviewController extends Controller
     {
         $validated = $request->validate([
             'milestone_id' => ['required', 'exists:milestones,id'],
-            'self_review' => ['required', 'string'],
+            'self_review' => ['required', 'string', 'min:10'],
             'challenges' => ['nullable', 'string'],
             'goals' => ['nullable', 'string'],
             'memo' => ['nullable', 'string'],
+        ], [], [
+            'self_review' => '自己評価',
+            'challenges' => '課題・困ったこと',
+            'goals' => '次期の目標',
+            'memo' => 'その他メモ',
         ]);
 
-        $review = Review::create([
-            'user_id' => Auth::id(),
-            'milestone_id' => $validated['milestone_id'],
-            'target_date' => now(),
-            'self_review' => $validated['self_review'],
-            'challenges' => $validated['challenges'],
-            'goals' => $validated['goals'],
-            'memo' => $validated['memo'],
-            'status' => 'draft',
-        ]);
+        $milestone = Milestone::findOrFail($validated['milestone_id']);
 
-        return redirect()->route('reviews.show', $review)
-            ->with('success', '振り返りシートを作成しました');
+        $review = new Review();
+        $review->user_id = Auth::id();
+        $review->milestone_id = $validated['milestone_id'];
+        $review->self_review = $validated['self_review'];
+        $review->challenges = $validated['challenges'];
+        $review->goals = $validated['goals'];
+        $review->memo = $validated['memo'];
+        $review->status = Review::STATUS_DRAFT;
+
+        // target_dateを入職日からの日数で計算
+        $review->target_date = Auth::user()->hire_date->addDays($milestone->days_after);
+
+        $review->save();
+
+        return redirect()
+            ->route('reviews.show', $review)
+            ->with('success', '振り返りシートを保存しました');
     }
 
     /**
-     * 振り返りシートを表示
+     * 振り返りシートの詳細を表示
      */
     public function show(Review $review)
     {
+        // 権限チェック（自分のレビューまたは承認者のみアクセス可能）
+        $this->authorize('view', $review);
+
         $review->load(['milestone', 'approvals.approver']);
 
-        return view('reviews.show', [
-            'review' => $review,
-        ]);
+        return view('reviews.show', compact('review'));
     }
 
     /**
-     * 振り返りシートを提出
+     * 編集フォームを表示
+     */
+    public function edit(Review $review)
+    {
+        // 権限チェック（自分のレビューのみ編集可能）
+        $this->authorize('update', $review);
+
+        // 承認済みの場合は編集不可
+        if ($review->isApproved()) {
+            return redirect()
+                ->route('reviews.show', $review)
+                ->with('error', '承認済みの振り返りシートは編集できません');
+        }
+
+        $review->load('milestone');
+
+        return view('reviews.edit', compact('review'));
+    }
+
+    /**
+     * 振り返りシートを更新
+     */
+    public function update(Request $request, Review $review)
+    {
+        // 権限チェック
+        $this->authorize('update', $review);
+
+        // 承認済みの場合は編集不可
+        if ($review->isApproved()) {
+            return redirect()
+                ->route('reviews.show', $review)
+                ->with('error', '承認済みの振り返りシートは編集できません');
+        }
+
+        $validated = $request->validate([
+            'self_review' => ['required', 'string', 'min:10'],
+            'challenges' => ['nullable', 'string'],
+            'goals' => ['nullable', 'string'],
+            'memo' => ['nullable', 'string'],
+        ], [], [
+            'self_review' => '自己評価',
+            'challenges' => '課題・困ったこと',
+            'goals' => '次期の目標',
+            'memo' => 'その他メモ',
+        ]);
+
+        $review->update($validated);
+
+        return redirect()
+            ->route('reviews.show', $review)
+            ->with('success', '振り返りシートを更新しました');
+    }
+
+    /**
+     * レビューを提出（承認待ち状態に）
      */
     public function submit(Review $review)
     {
-        if (!$review->isEditable()) {
-            return back()->with('error', 'この振り返りシートは提出できません');
+        // 権限チェック
+        $this->authorize('submit', $review);
+
+        if ($review->isSubmitted() || $review->isApproved()) {
+            return redirect()
+                ->route('reviews.show', $review)
+                ->with('error', 'すでに提出済みです');
         }
 
-        $review->update(['status' => 'submitted']);
+        $review->status = Review::STATUS_SUBMITTED;
+        $review->submitted_at = now();
+        $review->save();
 
-        return back()->with('success', '振り返りシートを提出しました');
+        // TODO: 承認者への通知
+
+        return redirect()
+            ->route('reviews.show', $review)
+            ->with('success', '振り返りシートを提出しました');
     }
 
     /**
-     * 振り返りシートを承認
+     * レビューを承認
      */
     public function approve(Request $request, Review $review)
     {
-        if (!$review->isApprovable()) {
-            return back()->with('error', 'この振り返りシートは承認できません');
-        }
+        // 権限チェック
+        $this->authorize('approve', $review);
 
         $validated = $request->validate([
             'comment' => ['nullable', 'string'],
+        ], [], [
+            'comment' => '承認コメント',
         ]);
 
-        $review->approvals()->create([
-            'approver_id' => Auth::id(),
-            'role' => Auth::user()->role,
-            'comment' => $validated['comment'],
-            'status' => 'approved',
-            'approved_at' => now(),
-        ]);
-
-        // すべての必要な承認が完了したかチェック
-        $requiredRoles = ['chief', 'manager_safety', 'manager_infection', 'manager_hrd', 'director'];
-        $approvedRoles = $review->approvals()
-            ->where('status', 'approved')
-            ->pluck('role')
-            ->toArray();
-
-        if (count(array_intersect($requiredRoles, $approvedRoles)) === count($requiredRoles)) {
-            $review->update(['status' => 'approved']);
-        } else {
-            $review->update(['status' => 'in_review']);
+        try {
+            $review->approve(Auth::user(), $validated['comment'] ?? null);
+        } catch (\Exception $e) {
+            return redirect()
+                ->route('reviews.show', $review)
+                ->with('error', $e->getMessage());
         }
 
-        return back()->with('success', '振り返りシートを承認しました');
+        return redirect()
+            ->route('reviews.show', $review)
+            ->with('success', '振り返りシートを承認しました');
     }
 
     /**
-     * 振り返りシートを差し戻し
+     * レビューを差戻し
      */
     public function reject(Request $request, Review $review)
     {
-        if (!$review->isApprovable()) {
-            return back()->with('error', 'この振り返りシートは差し戻しできません');
-        }
+        // 権限チェック
+        $this->authorize('approve', $review);
 
         $validated = $request->validate([
             'comment' => ['required', 'string'],
+        ], [], [
+            'comment' => '差戻しコメント',
         ]);
 
-        $review->approvals()->create([
-            'approver_id' => Auth::id(),
-            'role' => Auth::user()->role,
-            'comment' => $validated['comment'],
-            'status' => 'rejected',
-        ]);
+        try {
+            $review->reject(Auth::user(), $validated['comment']);
+        } catch (\Exception $e) {
+            return redirect()
+                ->route('reviews.show', $review)
+                ->with('error', $e->getMessage());
+        }
 
-        $review->update(['status' => 'rejected']);
-
-        return back()->with('success', '振り返りシートを差し戻しました');
+        return redirect()
+            ->route('reviews.show', $review)
+            ->with('success', '振り返りシートを差戻ししました');
     }
 }

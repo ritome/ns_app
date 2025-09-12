@@ -2,29 +2,39 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ReviewApproval extends Model
 {
-    use SoftDeletes;
+    use HasFactory, SoftDeletes;
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<string>
+     */
     protected $fillable = [
         'review_id',
         'approver_id',
         'role',
         'comment',
-        'status',
         'approved_at',
     ];
 
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
     protected $casts = [
         'approved_at' => 'datetime',
     ];
 
     /**
-     * この承認に関連するレビュー
+     * 承認対象のレビュー
      */
     public function review(): BelongsTo
     {
@@ -32,10 +42,18 @@ class ReviewApproval extends Model
     }
 
     /**
-     * この承認を行ったユーザー
+     * 承認者
      */
     public function approver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approver_id');
+    }
+
+    /**
+     * 承認済みかどうか
+     */
+    public function isApproved(): bool
+    {
+        return $this->approved_at !== null;
     }
 }
