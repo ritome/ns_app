@@ -1,0 +1,14 @@
+{
+  "program": {
+    "path": "storage/app/source_docs/program/program.docx",
+    "description": "新入看護職員育成プログラム（業務/必須経験/到達目標など）"
+  },
+  "review": {
+    "path": "storage/app/source_docs/review/review.docx",
+    "description": "節目ごとの振り返り様式（承認欄・設問群）"
+  },
+  "daily": {
+    "path": "storage/app/source_docs/daily/daily.docx",
+    "description": "日々の振り返り（実施内容/困りごと/コメント）"
+  }
+}

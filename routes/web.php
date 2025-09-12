@@ -1,22 +1,26 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Livewire\Volt\Volt;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\ProgramCheckController;
 
-Route::get('/', function () {
-    return view('welcome');
-})->name('home');
+// ホーム
+Route::view('/', 'welcome')->name('home');
 
-Route::view('dashboard', 'dashboard')
-    ->middleware(['auth', 'verified'])
-    ->name('dashboard');
-
-Route::middleware(['auth'])->group(function () {
-    Route::redirect('settings', 'settings/profile');
-
-    Volt::route('settings/profile', 'settings.profile')->name('settings.profile');
-    Volt::route('settings/password', 'settings.password')->name('settings.password');
-    Volt::route('settings/appearance', 'settings.appearance')->name('settings.appearance');
+// 認証（ゲストのみアクセス可能）
+Route::middleware('guest')->group(function () {
+    Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
+    Route::post('login', [LoginController::class, 'login']);
 });
 
-require __DIR__.'/auth.php';
+// 認証済みユーザー
+Route::middleware('auth')->group(function () {
+    Route::post('logout', [LoginController::class, 'logout'])->name('logout');
+    Route::get('/dashboard', function () {
+        return view('dashboard');
+    })->name('dashboard');
+
+    // 育成プログラムチェックリスト
+    Route::get('/program-checks', [ProgramCheckController::class, 'index'])->name('program-checks.index');
+    Route::post('/program-checks/{item}/toggle', [ProgramCheckController::class, 'toggle'])->name('program-checks.toggle');
+});
