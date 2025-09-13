@@ -1,50 +1,49 @@
-@extends('layouts.app')
+@extends('layouts.guest')
 
 @section('content')
-    <div class="container mx-auto mt-10">
-        <div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md">
-            <h2 class="text-2xl font-bold mb-6 text-center">ログイン</h2>
+    <div class="w-full sm:max-w-md px-6 py-4 bg-white shadow-md overflow-hidden sm:rounded-lg">
+        <!-- Session Status -->
+        <x-auth-session-status class="mb-4" :status="session('status')" />
 
-            @error('employee_id')
-                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-                    <span class="block sm:inline">{{ $message }}</span>
-                </div>
-            @enderror
+        <form method="POST" action="{{ route('login') }}">
+            @csrf
 
-            <form method="POST" action="{{ route('login') }}">
-                @csrf
-                <div class="mb-4">
-                    <label for="employee_id" class="block text-gray-700 text-sm font-bold mb-2">職員ID</label>
-                    <input type="text" name="employee_id" id="employee_id"
-                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline @error('employee_id') border-red-500 @enderror"
-                        value="{{ old('employee_id') }}" placeholder="例：N0001" required autofocus>
-                </div>
+            <!-- Employee ID -->
+            <div>
+                <x-input-label for="employee_id" :value="__('職員ID')" />
+                <x-text-input id="employee_id" class="block mt-1 w-full" type="text" name="employee_id" :value="old('employee_id')"
+                    required autofocus />
+                <x-input-error :messages="$errors->get('employee_id')" class="mt-2" />
+            </div>
 
-                <div class="mb-4">
-                    <label for="password" class="block text-gray-700 text-sm font-bold mb-2">パスワード</label>
-                    <input type="password" name="password" id="password"
-                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline @error('password') border-red-500 @enderror"
-                        required>
-                    @error('password')
-                        <p class="text-red-500 text-xs italic">{{ $message }}</p>
-                    @enderror
-                </div>
+            <!-- Password -->
+            <div class="mt-4">
+                <x-input-label for="password" :value="__('パスワード')" />
+                <x-text-input id="password" class="block mt-1 w-full" type="password" name="password" required />
+                <x-input-error :messages="$errors->get('password')" class="mt-2" />
+            </div>
 
-                <div class="mb-4">
-                    <label class="inline-flex items-center">
-                        <input type="checkbox" name="remember" id="remember" class="form-checkbox h-5 w-5 text-blue-600"
-                            {{ old('remember') ? 'checked' : '' }}>
-                        <span class="ml-2 text-gray-700">ログイン状態を保持する</span>
-                    </label>
-                </div>
+            <!-- Remember Me -->
+            <div class="block mt-4">
+                <label for="remember_me" class="inline-flex items-center">
+                    <input id="remember_me" type="checkbox"
+                        class="rounded border-gray-300 text-emerald-600 shadow-sm focus:ring-emerald-500" name="remember">
+                    <span class="ms-2 text-sm text-gray-600">{{ __('ログイン状態を保持') }}</span>
+                </label>
+            </div>
 
-                <div class="flex items-center justify-between">
-                    <button type="submit"
-                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                        ログイン
-                    </button>
-                </div>
-            </form>
-        </div>
+            <div class="flex items-center justify-end mt-4">
+                @if (Route::has('password.request'))
+                    <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"
+                        href="{{ route('password.request') }}">
+                        {{ __('パスワードをお忘れですか？') }}
+                    </a>
+                @endif
+
+                <x-primary-button class="ms-3">
+                    {{ __('ログイン') }}
+                </x-primary-button>
+            </div>
+        </form>
     </div>
 @endsection

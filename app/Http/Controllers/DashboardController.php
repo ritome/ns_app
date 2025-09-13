@@ -1,15 +1,18 @@
+<?php
+
 namespace App\Http\Controllers;
 
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
-public function index(Request $request)
-{
-$user = $request->user();
-return view('dashboard', compact('user'));
-}
-}
+    public function index()
+    {
+        if (!Auth::check()) {
+            return redirect()->route('login');
+        }
 
-
+        return view('dashboard');
+    }
+}
