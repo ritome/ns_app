@@ -79,5 +79,7 @@ Route::middleware(['auth'])->group(function () {
             ->name('edit');
         Route::put('/{dailyNote}', [DailyNoteController::class, 'update'])
             ->name('update');
+        Route::post('/{dailyNote}/comment', [DailyNoteController::class, 'comment'])
+            ->name('comment');
     });
 });
