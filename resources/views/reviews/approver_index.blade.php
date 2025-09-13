@@ -109,8 +109,8 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex items-center">
-                                    <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                                        <div class="h-2 bg-{{ $review->getStatusColor() }}-500 rounded-full"
+                                    <div class="flex-1 h-2.5 bg-gray-200 rounded-full overflow-hidden">
+                                        <div class="h-full bg-blue-500 rounded-full"
                                             style="width: {{ $review->getApprovalProgressPercentage() }}%">
                                         </div>
                                     </div>

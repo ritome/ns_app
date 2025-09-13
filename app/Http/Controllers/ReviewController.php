@@ -60,7 +60,7 @@ class ReviewController extends Controller
         }
 
         // 承認者の場合は承認待ちの振り返りシート一覧を表示
-        $query = Review::with(['user', 'milestone', 'approvals.approver'])
+        $query = Review::with(['user', 'milestone', 'approvals'])
             ->whereHas('user', function ($query) {
                 $query->where('role', 'new_nurse');
             });

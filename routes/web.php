@@ -39,6 +39,10 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('program-checks')->name('program-checks.')->group(function () {
         Route::get('/', [ProgramCheckController::class, 'index'])
             ->name('index');
+        Route::get('/approver', [ProgramCheckController::class, 'approverIndex'])
+            ->name('approver.index');
+        Route::get('/approver/{user}', [ProgramCheckController::class, 'approverShow'])
+            ->name('approver.show');
         Route::post('/toggle/{program_item}', [ProgramCheckController::class, 'toggle'])
             ->name('toggle');
     });

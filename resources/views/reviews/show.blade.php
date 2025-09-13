@@ -29,9 +29,8 @@
                     承認進捗: {{ $review->getApprovalProgressPercentage() }}%
                 </div>
             </div>
-            <div class="w-full bg-gray-200 rounded-full h-2">
-                <div class="bg-{{ $review->getStatusColor() }}-500 h-2 rounded-full"
-                    style="width: {{ $review->getApprovalProgressPercentage() }}%">
+            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                <div class="h-full bg-blue-500 rounded-full" style="width: {{ $review->getApprovalProgressPercentage() }}%">
                 </div>
             </div>
         </div>
