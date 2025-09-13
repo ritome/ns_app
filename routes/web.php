@@ -79,7 +79,12 @@ Route::middleware(['auth'])->group(function () {
             ->name('edit');
         Route::put('/{dailyNote}', [DailyNoteController::class, 'update'])
             ->name('update');
-        Route::post('/{dailyNote}/comment', [DailyNoteController::class, 'comment'])
-            ->name('comment');
+        // コメント関連
+        Route::prefix('{dailyNote}/comments')->name('comments.')->group(function () {
+            Route::post('/', [DailyNoteController::class, 'storeComment'])->name('store');
+            Route::get('/{dailyComment}/edit', [DailyNoteController::class, 'editComment'])->name('edit');
+            Route::put('/{dailyComment}', [DailyNoteController::class, 'updateComment'])->name('update');
+            Route::delete('/{dailyComment}', [DailyNoteController::class, 'deleteComment'])->name('destroy');
+        });
     });
 });
