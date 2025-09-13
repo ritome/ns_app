@@ -15,6 +15,12 @@
                         class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('dashboard') ? 'border-emerald-500 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} text-sm font-medium">
                         ダッシュボード
                     </a>
+                    @if (Auth::user()->role !== 'new_nurse')
+                        <a href="{{ route('program-checks.approver.index') }}"
+                            class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('program-checks.approver.*') ? 'border-emerald-500 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} text-sm font-medium">
+                            チェックリスト確認
+                        </a>
+                    @endif
                 </div>
             </div>
 

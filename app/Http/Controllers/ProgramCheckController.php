@@ -6,9 +6,73 @@ use App\Models\ProgramItem;
 use App\Models\ProgramCheck;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 
 class ProgramCheckController extends Controller
 {
+    /**
+     * 承認者用のチェックリスト一覧を表示
+     */
+    public function approverIndex(Request $request)
+    {
+        // 新入看護師一覧を取得
+        $newNurses = User::where('role', 'new_nurse')
+            ->orderBy('hire_date')
+            ->get();
+
+        return view('program-checks.approver.index', compact('newNurses'));
+    }
+
+    /**
+     * 承認者用の特定の新人のチェックリスト詳細を表示
+     */
+    public function approverShow(Request $request, User $user)
+    {
+        // 新入看護師以外のチェックリストは表示不可
+        if ($user->role !== 'new_nurse') {
+            abort(404);
+        }
+
+        // クエリの構築
+        $query = ProgramItem::with(['checks' => function ($query) use ($user) {
+            $query->where('user_id', $user->id);
+        }]);
+
+        // カテゴリーでフィルター
+        if ($request->has('category')) {
+            $query->where('category', $request->category);
+        }
+
+        // チェックリスト項目を取得（新人用と同じ順序で）
+        $items = $query->orderBy('category')
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+
+        // 進捗率を計算
+        $totalCount = $items->count();
+        $checkedCount = $items->filter(function ($item) {
+            return $item->checks->isNotEmpty() && $item->checks->first()->checked_at !== null;
+        })->count();
+
+        $percentage = $totalCount > 0 ? round(($checkedCount / $totalCount) * 100) : 0;
+
+        // カテゴリー一覧を取得
+        $categories = ProgramItem::query()
+            ->select('category')
+            ->distinct()
+            ->pluck('category');
+
+        return view('program-checks.approver.show', [
+            'user' => $user,
+            'groupedItems' => $items->groupBy('category'),
+            'categories' => $categories,
+            'selectedCategory' => $request->category,
+            'checkedCount' => $checkedCount,
+            'totalCount' => $totalCount,
+            'percentage' => $percentage,
+        ]);
+    }
     public function index(Request $request)
     {
         $query = ProgramItem::query()
