@@ -21,7 +21,9 @@
 
         <!-- イラスト -->
         <div class="mb-12">
-            <img src="{{ asset('images/nurse-hero.png') }}" alt="看護師のイラスト" class="w-full max-w-lg mx-auto">
+            <div class="max-w-[320px] mx-auto">
+                <img src="{{ asset('images/nurse-hero.png') }}" alt="看護師のイラスト" class="w-full h-auto">
+            </div>
         </div>
 
         <!-- ボタン -->
