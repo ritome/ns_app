@@ -46,6 +46,9 @@ class ProgramItem extends Model
         }
 
         $userCheck = $this->checks->where('user_id', Auth::id())->first();
-        return $userCheck ? $userCheck->checked_at : null;
+        if (!$userCheck || !$userCheck->checked_at) {
+            return null;
+        }
+        return $userCheck->checked_at->format('Y年n月j日');
     }
 }
