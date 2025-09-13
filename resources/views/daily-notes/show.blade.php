@@ -62,7 +62,7 @@
 
             {{-- コメント投稿フォーム --}}
             @unless (auth()->user()->role === 'new_nurse' && $dailyNote->user_id !== auth()->id())
-                <form method="POST" action="{{ route('daily-notes.comment', $dailyNote) }}" class="mb-8">
+                <form method="POST" action="{{ route('daily-notes.comments.store', $dailyNote) }}" class="mb-8">
                     @csrf
                     <div class="bg-white shadow-sm rounded-lg p-6">
                         <div class="mb-4">
@@ -77,12 +77,28 @@
 
                         @if (auth()->user()->role !== 'new_nurse')
                             <div class="mb-4">
-                                <label class="inline-flex items-center">
-                                    <input type="checkbox" name="is_partner_of_the_day" value="1"
-                                        {{ old('is_partner_of_the_day') ? 'checked' : '' }}
-                                        class="rounded border-gray-300 text-emerald-600 shadow-sm focus:border-emerald-500 focus:ring focus:ring-emerald-500 focus:ring-opacity-50">
-                                    <span class="ml-2 text-sm text-gray-600">当日の担当者として記録する</span>
-                                </label>
+                                <div class="text-sm font-medium text-gray-700 mb-2">担当者区分 <span class="text-rose-500">*</span>
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="inline-flex items-center">
+                                        <input type="radio" name="is_partner_of_the_day" value="1"
+                                            {{ old('is_partner_of_the_day') === '1' ? 'checked' : '' }}
+                                            class="rounded-full border-gray-300 text-emerald-600 shadow-sm focus:border-emerald-500 focus:ring focus:ring-emerald-500 focus:ring-opacity-50"
+                                            required>
+                                        <span class="ml-2 text-sm text-gray-600">当日の担当者</span>
+                                    </label>
+                                    <br>
+                                    <label class="inline-flex items-center">
+                                        <input type="radio" name="is_partner_of_the_day" value="0"
+                                            {{ old('is_partner_of_the_day') === '0' ? 'checked' : '' }}
+                                            class="rounded-full border-gray-300 text-emerald-600 shadow-sm focus:border-emerald-500 focus:ring focus:ring-emerald-500 focus:ring-opacity-50"
+                                            required>
+                                        <span class="ml-2 text-sm text-gray-600">その他の指導者</span>
+                                    </label>
+                                </div>
+                                @error('is_partner_of_the_day')
+                                    <p class="mt-2 text-sm text-rose-600">{{ $message }}</p>
+                                @enderror
                             </div>
                         @endif
 
@@ -106,16 +122,49 @@
                                     <div class="flex items-center justify-between">
                                         <div class="flex items-center">
                                             <h3 class="text-sm font-medium text-gray-900">
-                                                {{ $comment->commenter->full_name }}</h3>
+                                                {{ $comment->commenter->full_name }}
+                                                <span class="text-gray-500">
+                                                    ({{ $comment->commenter->role === 'partner_nurse' ? 'パートナー看護師' : '指導者' }})
+                                                </span>
+                                            </h3>
                                             @if ($comment->is_partner_of_the_day)
                                                 <span
                                                     class="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-emerald-100 text-emerald-800">
-                                                    担当者
+                                                    当日の担当者
+                                                </span>
+                                            @else
+                                                <span
+                                                    class="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                                    その他の指導者
                                                 </span>
                                             @endif
                                         </div>
-                                        <p class="text-sm text-gray-500">{{ $comment->created_at->format('Y年n月j日 H:i') }}
-                                        </p>
+                                        <div class="flex items-center space-x-4">
+                                            <div class="text-sm text-gray-500">
+                                                <time datetime="{{ $comment->created_at->toIso8601String() }}">
+                                                    {{ $comment->created_at->format('Y年n月j日 H:i') }}
+                                                </time>
+                                            </div>
+
+                                            @if ($comment->commenter_id === auth()->id() && $comment->created_at->diffInDays(now()) < 7)
+                                                <div class="flex items-center space-x-2">
+                                                    <a href="{{ route('daily-notes.comments.edit', [$dailyNote, $comment]) }}"
+                                                        class="text-sm text-gray-500 hover:text-gray-700">
+                                                        編集
+                                                    </a>
+                                                    <form method="POST"
+                                                        action="{{ route('daily-notes.comments.destroy', [$dailyNote, $comment]) }}"
+                                                        class="inline" onsubmit="return confirm('このコメントを削除してもよろしいですか？');">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit"
+                                                            class="text-sm text-rose-500 hover:text-rose-700">
+                                                            削除
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            @endif
+                                        </div>
                                     </div>
                                     <div class="mt-2 text-sm text-gray-700 whitespace-pre-wrap">{{ $comment->comment }}
                                     </div>

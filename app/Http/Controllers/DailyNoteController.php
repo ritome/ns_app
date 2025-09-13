@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\DailyNote;
+use App\Models\DailyComment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -180,7 +181,7 @@ class DailyNoteController extends Controller
     /**
      * コメントを投稿
      */
-    public function comment(Request $request, DailyNote $dailyNote)
+    public function storeComment(Request $request, DailyNote $dailyNote)
     {
         // 新入看護師は他人の記録にコメント不可
         if (Auth::user()->role === 'new_nurse' && $dailyNote->user_id !== Auth::id()) {
@@ -190,10 +191,12 @@ class DailyNoteController extends Controller
         try {
             $validated = $request->validate([
                 'comment' => ['required', 'string'],
-                'is_partner_of_the_day' => ['nullable', 'boolean'],
-            ], [], [
+                'is_partner_of_the_day' => ['required', 'boolean'],
+            ], [
+                'is_partner_of_the_day.required' => '当日の担当者かどうかを選択してください',
+            ], [
                 'comment' => 'コメント',
-                'is_partner_of_the_day' => '担当者フラグ',
+                'is_partner_of_the_day' => '当日の担当者',
             ]);
 
             // コメントを作成
@@ -212,10 +215,9 @@ class DailyNoteController extends Controller
                 'is_partner_of_the_day' => $request->boolean('is_partner_of_the_day')
             ]);
 
-            return redirect()
-                ->route('daily-notes.show', $dailyNote)
-                ->with('success', 'コメントを投稿しました');
-
+            return back()
+                ->with('success', 'コメントを投稿しました')
+                ->withInput();
         } catch (\Exception $e) {
             Log::error('Comment creation failed:', [
                 'error' => $e->getMessage(),
@@ -229,5 +231,83 @@ class DailyNoteController extends Controller
                 ->withInput()
                 ->with('error', 'コメントの投稿に失敗しました: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * コメント編集フォームを表示
+     */
+    public function editComment(DailyNote $dailyNote, DailyComment $dailyComment)
+    {
+        // 自分のコメント以外は編集不可
+        if ($dailyComment->commenter_id !== Auth::id()) {
+            abort(403);
+        }
+
+        // 1週間以上経過したコメントは編集不可
+        if ($dailyComment->created_at->diffInDays(now()) >= 7) {
+            return redirect()
+                ->route('daily-notes.show', $dailyNote)
+                ->with('error', '1週間以上経過したコメントは編集できません');
+        }
+
+        return view('daily-notes.edit-comment', compact('dailyNote', 'dailyComment'));
+    }
+
+    /**
+     * コメントを更新
+     */
+    public function updateComment(Request $request, DailyNote $dailyNote, DailyComment $dailyComment)
+    {
+        // 自分のコメント以外は編集不可
+        if ($dailyComment->commenter_id !== Auth::id()) {
+            abort(403);
+        }
+
+        // 1週間以上経過したコメントは編集不可
+        if ($dailyComment->created_at->diffInDays(now()) >= 7) {
+            return redirect()
+                ->route('daily-notes.show', $dailyNote)
+                ->with('error', '1週間以上経過したコメントは編集できません');
+        }
+
+        $validated = $request->validate([
+            'comment' => ['required', 'string'],
+            'is_partner_of_the_day' => ['required', 'boolean'],
+        ], [
+            'is_partner_of_the_day.required' => '当日の担当者かどうかを選択してください',
+        ], [
+            'comment' => 'コメント',
+            'is_partner_of_the_day' => '当日の担当者',
+        ]);
+
+        $comment->update($validated);
+
+        return redirect()
+            ->route('daily-notes.show', $dailyNote)
+            ->with('success', 'コメントを更新しました');
+    }
+
+    /**
+     * コメントを削除
+     */
+    public function deleteComment(DailyNote $dailyNote, DailyComment $dailyComment)
+    {
+        // 自分のコメント以外は削除不可
+        if ($dailyComment->commenter_id !== Auth::id()) {
+            abort(403);
+        }
+
+        // 1週間以上経過したコメントは削除不可
+        if ($dailyComment->created_at->diffInDays(now()) >= 7) {
+            return redirect()
+                ->route('daily-notes.show', $dailyNote)
+                ->with('error', '1週間以上経過したコメントは削除できません');
+        }
+
+        $dailyComment->delete();
+
+        return redirect()
+            ->route('daily-notes.show', $dailyNote)
+            ->with('success', 'コメントを削除しました');
     }
 }
