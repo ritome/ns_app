@@ -110,12 +110,13 @@
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex items-center">
                                     <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                                        <div class="h-2 bg-{{ $review->getStatusColor() }}-500 rounded-full"
+                                        <div class="h-2 bg-{{ $review->getStatusColor() }}-500 rounded-full transition-all duration-300"
                                             style="width: {{ $review->getApprovalProgressPercentage() }}%">
                                         </div>
                                     </div>
                                     <span class="ml-2 text-sm text-gray-500">
                                         {{ $review->getApprovalProgressPercentage() }}%
+                                        <span class="text-xs text-gray-400">({{ $review->status }})</span>
                                     </span>
                                 </div>
                             </td>

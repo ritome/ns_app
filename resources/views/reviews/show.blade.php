@@ -30,9 +30,11 @@
                 </div>
             </div>
             <div class="w-full bg-gray-200 rounded-full h-2">
-                <div class="bg-{{ $review->getStatusColor() }}-500 h-2 rounded-full"
-                    style="width: {{ $review->getApprovalProgressPercentage() }}%">
-                </div>
+                @if ($review->status !== 'draft')
+                    <div class="bg-{{ $review->getStatusColor() }}-500 h-2 rounded-full transition-all duration-300"
+                        style="width: {{ $review->getApprovalProgressPercentage() }}%">
+                    </div>
+                @endif
             </div>
         </div>
 
