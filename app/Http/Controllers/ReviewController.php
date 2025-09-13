@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Milestone;
 use App\Models\Review;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -15,43 +16,88 @@ class ReviewController extends Controller
     /**
      * 振り返りシート一覧を表示
      */
-    public function index()
+    public function index(Request $request)
     {
-        // マイルストーン一覧を取得（関連するレビューも含めて）
-        $milestones = Milestone::with(['review' => function ($query) {
-            $query->where('user_id', Auth::id());
-        }])->orderBy('days_after')->get();
+        $user = Auth::user();
 
-        // 次に作成すべきマイルストーンを特定
-        $nextMilestone = $milestones->first(function ($milestone) {
-            return !$milestone->hasReview();
-        });
+        // 新入看護師の場合は自分の振り返りシート一覧を表示
+        if ($user->role === 'new_nurse') {
+            // マイルストーン一覧を取得（関連するレビューも含めて）
+            $milestones = Milestone::with(['review' => function ($query) {
+                $query->where('user_id', Auth::id());
+            }])->orderBy('days_after')->get();
 
-        // 完了率を計算（作成済み / 全体）
-        $totalMilestones = $milestones->count();
-        $completedMilestones = $milestones->filter(function ($milestone) {
-            return $milestone->hasReview();
-        })->count();
+            // 次に作成すべきマイルストーンを特定
+            $nextMilestone = $milestones->first(function ($milestone) {
+                return !$milestone->hasReview();
+            });
 
-        $completionRate = $totalMilestones > 0
-            ? round(($completedMilestones / $totalMilestones) * 100)
-            : 0;
+            // 完了率を計算（作成済み / 全体）
+            $totalMilestones = $milestones->count();
+            $completedMilestones = $milestones->filter(function ($milestone) {
+                return $milestone->hasReview();
+            })->count();
 
-        // 承認率を計算（承認済み / 作成済み）
-        $approvedMilestones = $milestones->filter(function ($milestone) {
-            return $milestone->hasReview() && $milestone->review->isApproved();
-        })->count();
+            $completionRate = $totalMilestones > 0
+                ? round(($completedMilestones / $totalMilestones) * 100)
+                : 0;
 
-        $approvalRate = $completedMilestones > 0
-            ? round(($approvedMilestones / $completedMilestones) * 100)
-            : 0;
+            // 承認率を計算（承認済み / 作成済み）
+            $approvedMilestones = $milestones->filter(function ($milestone) {
+                return $milestone->hasReview() && $milestone->review->isApproved();
+            })->count();
 
-        return view('reviews.index', compact(
-            'milestones',
-            'nextMilestone',
-            'completionRate',
-            'approvalRate'
-        ));
+            $approvalRate = $completedMilestones > 0
+                ? round(($approvedMilestones / $completedMilestones) * 100)
+                : 0;
+
+            return view('reviews.index', compact(
+                'milestones',
+                'nextMilestone',
+                'completionRate',
+                'approvalRate'
+            ));
+        }
+
+        // 承認者の場合は承認待ちの振り返りシート一覧を表示
+        $query = Review::with(['user', 'milestone', 'approvals.approver'])
+            ->whereHas('user', function ($query) {
+                $query->where('role', 'new_nurse');
+            });
+
+        // 新入看護師でフィルター
+        if ($request->filled('nurse_id')) {
+            $query->where('user_id', $request->nurse_id);
+        }
+
+        // ステータスでフィルター
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        } else {
+            $query->where(function ($query) {
+                $query->where('status', Review::STATUS_SUBMITTED)
+                    ->orWhere('status', Review::STATUS_APPROVED);
+            });
+        }
+
+        // 期間でフィルター
+        if ($request->filled('period')) {
+            $query->where('submitted_at', '>=', match ($request->period) {
+                '1week' => now()->subWeek(),
+                '1month' => now()->subMonth(),
+                '3months' => now()->subMonths(3),
+                default => now()->subYear(),
+            });
+        }
+
+        $reviews = $query->orderBy('submitted_at', 'desc')->paginate(10);
+
+        // 新入看護師一覧を取得（フィルター用）
+        $newNurses = User::where('role', 'new_nurse')
+            ->orderBy('hire_date')
+            ->get();
+
+        return view('reviews.approver_index', compact('reviews', 'newNurses'));
     }
 
     /**
@@ -114,9 +160,11 @@ class ReviewController extends Controller
     public function show(Review $review)
     {
         // 権限チェック（自分のレビューまたは承認者のみアクセス可能）
-        $this->authorize('view', $review);
+        if ($review->user_id !== Auth::id() && Auth::user()->role === 'new_nurse') {
+            abort(403);
+        }
 
-        $review->load(['milestone', 'approvals.approver']);
+        $review->load(['milestone', 'approvals.approver', 'user']);
 
         return view('reviews.show', compact('review'));
     }
@@ -127,7 +175,9 @@ class ReviewController extends Controller
     public function edit(Review $review)
     {
         // 権限チェック（自分のレビューのみ編集可能）
-        $this->authorize('update', $review);
+        if ($review->user_id !== Auth::id()) {
+            abort(403);
+        }
 
         // 承認済みの場合は編集不可
         if ($review->isApproved()) {
@@ -147,7 +197,9 @@ class ReviewController extends Controller
     public function update(Request $request, Review $review)
     {
         // 権限チェック
-        $this->authorize('update', $review);
+        if ($review->user_id !== Auth::id()) {
+            abort(403);
+        }
 
         // 承認済みの場合は編集不可
         if ($review->isApproved()) {
@@ -181,7 +233,9 @@ class ReviewController extends Controller
     public function submit(Review $review)
     {
         // 権限チェック
-        $this->authorize('submit', $review);
+        if ($review->user_id !== Auth::id()) {
+            abort(403);
+        }
 
         if ($review->isSubmitted() || $review->isApproved()) {
             return redirect()
@@ -189,11 +243,7 @@ class ReviewController extends Controller
                 ->with('error', 'すでに提出済みです');
         }
 
-        $review->status = Review::STATUS_SUBMITTED;
-        $review->submitted_at = now();
-        $review->save();
-
-        // TODO: 承認者への通知
+        $review->submit();
 
         return redirect()
             ->route('reviews.show', $review)
@@ -205,8 +255,16 @@ class ReviewController extends Controller
      */
     public function approve(Request $request, Review $review)
     {
-        // 権限チェック
-        $this->authorize('approve', $review);
+        // 権限チェック（新入看護師以外のみ承認可能）
+        if (Auth::user()->role === 'new_nurse') {
+            abort(403);
+        }
+
+        if (!$review->isApprovable()) {
+            return redirect()
+                ->route('reviews.show', $review)
+                ->with('error', '承認できない状態です');
+        }
 
         $validated = $request->validate([
             'comment' => ['nullable', 'string'],
@@ -214,13 +272,7 @@ class ReviewController extends Controller
             'comment' => '承認コメント',
         ]);
 
-        try {
-            $review->approve(Auth::user(), $validated['comment'] ?? null);
-        } catch (\Exception $e) {
-            return redirect()
-                ->route('reviews.show', $review)
-                ->with('error', $e->getMessage());
-        }
+        $review->approve($validated['comment'] ?? null);
 
         return redirect()
             ->route('reviews.show', $review)
@@ -232,8 +284,16 @@ class ReviewController extends Controller
      */
     public function reject(Request $request, Review $review)
     {
-        // 権限チェック
-        $this->authorize('approve', $review);
+        // 権限チェック（新入看護師以外のみ差戻し可能）
+        if (Auth::user()->role === 'new_nurse') {
+            abort(403);
+        }
+
+        if (!$review->isApprovable()) {
+            return redirect()
+                ->route('reviews.show', $review)
+                ->with('error', '差戻しできない状態です');
+        }
 
         $validated = $request->validate([
             'comment' => ['required', 'string'],
@@ -241,13 +301,7 @@ class ReviewController extends Controller
             'comment' => '差戻しコメント',
         ]);
 
-        try {
-            $review->reject(Auth::user(), $validated['comment']);
-        } catch (\Exception $e) {
-            return redirect()
-                ->route('reviews.show', $review)
-                ->with('error', $e->getMessage());
-        }
+        $review->reject($validated['comment']);
 
         return redirect()
             ->route('reviews.show', $review)
