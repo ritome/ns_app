@@ -13,9 +13,7 @@ class User extends Authenticatable
 
     protected $fillable = [
         'employee_id',
-        'name',
         'full_name',
-        'email',
         'password',
         'role',
         'hire_date',
@@ -27,7 +25,6 @@ class User extends Authenticatable
     ];
 
     protected $casts = [
-        'email_verified_at' => 'datetime',
         'password' => 'hashed',
         'hire_date' => 'date',
     ];
@@ -35,5 +32,17 @@ class User extends Authenticatable
     public function username()
     {
         return 'employee_id';
+    }
+
+    // nameアクセサ - full_nameの値を返す
+    public function getNameAttribute()
+    {
+        return $this->full_name;
+    }
+
+    // nameミューテタ - full_nameに値を設定
+    public function setNameAttribute($value)
+    {
+        $this->attributes['full_name'] = $value;
     }
 }

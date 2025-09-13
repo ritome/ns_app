@@ -45,9 +45,17 @@
                                 <div class="divide-y">
                                     @foreach ($items as $item)
                                         <div class="px-6 py-4 flex items-start gap-x-4">
-                                            <div class="mt-1">
-                                                <button type="button" onclick="toggleCheck({{ $item->id }})"
-                                                    class="w-5 h-5 rounded border border-gray-300 flex items-center justify-center {{ $item->isChecked() ? 'bg-emerald-600 border-emerald-600' : 'hover:border-emerald-600' }}"
+                                            <div class="mt-1" x-data="{ loading: false }">
+                                                <button type="button"
+                                                    @click="
+                                                    if (!loading) {
+                                                        loading = true;
+                                                        toggleCheck({{ $item->id }})
+                                                            .finally(() => loading = false);
+                                                    }
+                                                "
+                                                    :disabled="loading"
+                                                    class="w-5 h-5 rounded border border-gray-300 flex items-center justify-center {{ $item->isChecked() ? 'bg-emerald-600 border-emerald-600' : 'hover:border-emerald-600' }} disabled:opacity-50 disabled:cursor-not-allowed"
                                                     id="check-{{ $item->id }}">
                                                     @if ($item->isChecked())
                                                         <svg class="w-3.5 h-3.5 text-white" viewBox="0 0 20 20"
@@ -87,9 +95,12 @@
                     const response = await fetch(`/program-checks/toggle/${itemId}`, {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                        }
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json',
+                        },
+                        body: new URLSearchParams({
+                            _token: '{{ csrf_token() }}'
+                        })
                     });
 
                     if (!response.ok) {
@@ -106,10 +117,10 @@
                     if (data.checked) {
                         checkButton.classList.add('bg-emerald-600', 'border-emerald-600');
                         checkButton.innerHTML = `
-                <svg class="w-3.5 h-3.5 text-white" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                </svg>
-            `;
+                            <svg class="w-3.5 h-3.5 text-white" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        `;
                         dateText.textContent = `達成日: ${data.checked_at}`;
                         dateText.style.display = '';
                     } else {

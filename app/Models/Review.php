@@ -172,4 +172,104 @@ class Review extends Model
 
         return true;
     }
+
+    /**
+     * 承認を実行
+     */
+    public function approve(string $comment = null): void
+    {
+        // 承認履歴を作成
+        $this->approvals()->create([
+            'approver_id' => Auth::id(),
+            'role' => Auth::user()->role,
+            'comment' => $comment,
+            'approved_at' => now(),
+        ]);
+
+        // 全ての承認が完了した場合はステータスを更新
+        if ($this->isFullyApproved()) {
+            $this->update(['status' => self::STATUS_APPROVED]);
+        }
+    }
+
+    /**
+     * 差戻しを実行
+     */
+    public function reject(string $comment): void
+    {
+        // 承認履歴を作成（差戻し）
+        $this->approvals()->create([
+            'approver_id' => Auth::id(),
+            'role' => Auth::user()->role,
+            'comment' => $comment,
+            'rejected_at' => now(),
+        ]);
+
+        // ステータスを差戻しに更新
+        $this->update(['status' => self::STATUS_REJECTED]);
+    }
+
+    /**
+     * 提出を実行
+     */
+    public function submit(): void
+    {
+        $this->update([
+            'status' => self::STATUS_SUBMITTED,
+            'submitted_at' => now(),
+        ]);
+    }
+
+    /**
+     * 承認進捗率を計算
+     */
+    public function getApprovalProgressPercentage(): int
+    {
+        $requiredRoles = [
+            'partner_nurse',
+            'educator',
+            'chief',
+            'manager_safety',
+            'manager_infection',
+            'manager_hrd',
+            'director',
+        ];
+
+        $approvedCount = 0;
+        foreach ($requiredRoles as $role) {
+            if ($this->isApprovedByRole($role)) {
+                $approvedCount++;
+            }
+        }
+
+        return round(($approvedCount / count($requiredRoles)) * 100);
+    }
+
+    /**
+     * 承認状態のラベルを取得
+     */
+    public function getStatusLabel(): string
+    {
+        return match ($this->status) {
+            self::STATUS_DRAFT => '下書き',
+            self::STATUS_SUBMITTED => '承認待ち',
+            self::STATUS_APPROVED => '承認済み',
+            self::STATUS_REJECTED => '差戻し',
+            default => '不明',
+        };
+    }
+
+    /**
+     * 承認状態のカラーを取得（Tailwind CSS用）
+     */
+    public function getStatusColor(): string
+    {
+        return match ($this->status) {
+            self::STATUS_DRAFT => 'gray',
+            self::STATUS_SUBMITTED => 'yellow',
+            self::STATUS_APPROVED => 'emerald',
+            self::STATUS_REJECTED => 'rose',
+            default => 'gray',
+        };
+    }
 }

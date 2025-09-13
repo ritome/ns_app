@@ -2,14 +2,13 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ReviewApproval extends Model
 {
-    use HasFactory, SoftDeletes;
+    use SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -17,11 +16,11 @@ class ReviewApproval extends Model
      * @var array<string>
      */
     protected $fillable = [
-        'review_id',
         'approver_id',
         'role',
         'comment',
         'approved_at',
+        'rejected_at',
     ];
 
     /**
@@ -31,10 +30,11 @@ class ReviewApproval extends Model
      */
     protected $casts = [
         'approved_at' => 'datetime',
+        'rejected_at' => 'datetime',
     ];
 
     /**
-     * 承認対象のレビュー
+     * 対象のレビュー
      */
     public function review(): BelongsTo
     {
@@ -55,5 +55,30 @@ class ReviewApproval extends Model
     public function isApproved(): bool
     {
         return $this->approved_at !== null;
+    }
+
+    /**
+     * 差戻しかどうか
+     */
+    public function isRejected(): bool
+    {
+        return $this->rejected_at !== null;
+    }
+
+    /**
+     * 承認者の役職名を取得
+     */
+    public function getRoleName(): string
+    {
+        return match ($this->role) {
+            'partner_nurse' => 'パートナー看護師',
+            'educator' => '教育係',
+            'chief' => '主任',
+            'manager_safety' => '課長（医療安全）',
+            'manager_infection' => '課長（感染制御）',
+            'manager_hrd' => '課長（人材育成）',
+            'director' => '部長',
+            default => '不明',
+        };
     }
 }
