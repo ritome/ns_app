@@ -6,6 +6,7 @@ use App\Models\ProgramItem;
 use App\Models\ProgramCheck;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use App\Models\User;
 
 class ProgramCheckController extends Controller
@@ -119,41 +120,63 @@ class ProgramCheckController extends Controller
 
     public function toggle(Request $request, ProgramItem $program_item)
     {
-        $check = ProgramCheck::where('user_id', Auth::id())
-            ->where('program_item_id', $program_item->id)
-            ->first();
+        try {
+            $userId = Auth::id();
+            $currentTime = now();
 
-        $checked = false;
-        $checked_at = null;
-
-        if ($check) {
-            $check->checked_at = $check->checked_at ? null : now();
-            $check->save();
-            $checked = $check->checked_at !== null;
-            $checked_at = $check->checked_at?->format('Y年n月j日');
-        } else {
-            $check = ProgramCheck::create([
-                'user_id' => Auth::id(),
+            \Log::info('Toggle request:', [
+                'user_id' => $userId,
                 'program_item_id' => $program_item->id,
-                'checked_at' => now(),
+                'current_time' => $currentTime->format('Y-m-d H:i:s'),
             ]);
-            $checked = true;
-            $checked_at = $check->checked_at->format('Y年n月j日');
+
+            $check = ProgramCheck::where('user_id', $userId)
+                ->where('program_item_id', $program_item->id)
+                ->first();
+
+            if ($check) {
+                $check->checked_at = $check->checked_at ? null : $currentTime;
+                $check->save();
+            } else {
+                $check = ProgramCheck::create([
+                    'user_id' => $userId,
+                    'program_item_id' => $program_item->id,
+                    'checked_at' => $currentTime,
+                ]);
+            }
+
+            $checked = $check->checked_at !== null;
+            $checked_at = $checked ? $currentTime->format('Y年n月j日') : null;
+
+            \Log::info('Toggle result:', [
+                'checked' => $checked,
+                'checked_at' => $checked_at,
+            ]);
+
+            // 全体の進捗を再計算
+            $totalCount = ProgramItem::count();
+            $checkedCount = ProgramCheck::where('user_id', Auth::id())
+                ->whereNotNull('checked_at')
+                ->count();
+            $percentage = $totalCount > 0 ? round(($checkedCount / $totalCount) * 100) : 0;
+
+            return response()->json([
+                'checked' => $checked,
+                'checked_at' => $checked_at,
+                'checked_count' => $checkedCount,
+                'total_count' => $totalCount,
+                'percentage' => $percentage,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Toggle error:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'error' => 'チェックの更新中にエラーが発生しました。',
+                'message' => $e->getMessage(),
+            ], 500);
         }
-
-        // 全体の進捗を再計算
-        $totalCount = ProgramItem::count();
-        $checkedCount = ProgramCheck::where('user_id', Auth::id())
-            ->whereNotNull('checked_at')
-            ->count();
-        $percentage = $totalCount > 0 ? round(($checkedCount / $totalCount) * 100) : 0;
-
-        return response()->json([
-            'checked' => $checked,
-            'checked_at' => $checked_at,
-            'checked_count' => $checkedCount,
-            'total_count' => $totalCount,
-            'percentage' => $percentage,
-        ]);
     }
 }

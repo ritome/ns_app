@@ -74,7 +74,7 @@
                                                 @endif
                                                 <p class="mt-2 text-sm text-emerald-600" id="date-{{ $item->id }}"
                                                     style="{{ $item->isChecked() ? '' : 'display: none;' }}">
-                                                    達成日: {{ $item->checked_at ? $item->checked_at->format('Y年n月j日') : '' }}
+                                                    達成日: {{ $item->checked_at }}
                                                 </p>
                                             </div>
                                         </div>
@@ -103,11 +103,13 @@
                         })
                     });
 
+                    const data = await response.json();
+                    console.log('Toggle response:', data);
+
                     if (!response.ok) {
-                        throw new Error('Network response was not ok');
+                        throw new Error(data.error || 'チェックの更新中にエラーが発生しました。')
                     }
 
-                    const data = await response.json();
                     const checkButton = document.getElementById(`check-${itemId}`);
                     const dateText = document.getElementById(`date-${itemId}`);
                     const progressBar = document.getElementById('progress-bar');
@@ -122,7 +124,7 @@
                             </svg>
                         `;
                         dateText.textContent = `達成日: ${data.checked_at}`;
-                        dateText.style.display = '';
+                        dateText.style.display = data.checked_at ? '' : 'none';
                     } else {
                         checkButton.classList.remove('bg-emerald-600', 'border-emerald-600');
                         checkButton.innerHTML = '';

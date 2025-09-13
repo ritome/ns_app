@@ -8,7 +8,8 @@
         <div>
             <x-input-label for="employee_id" value="職員ID" />
             <x-text-input id="employee_id" class="block mt-1 w-full" type="text" name="employee_id" :value="old('employee_id')"
-                required autofocus autocomplete="employee_id" />
+                required autofocus autocomplete="employee_id" placeholder="例：N0001" />
+            <p class="mt-1 text-sm text-gray-500">大文字アルファベット1文字と4桁の数字（例：N0001）</p>
             <x-input-error :messages="$errors->get('employee_id')" class="mt-2" />
         </div>
 
@@ -16,7 +17,7 @@
         <div class="mt-4">
             <x-input-label for="full_name" value="氏名" />
             <x-text-input id="full_name" class="block mt-1 w-full" type="text" name="full_name" :value="old('full_name')"
-                required autocomplete="name" />
+                required autocomplete="name" placeholder="山田 花子" />
             <x-input-error :messages="$errors->get('full_name')" class="mt-2" />
         </div>
 
@@ -33,6 +34,7 @@
             <x-input-label for="password" value="パスワード" />
             <x-text-input id="password" class="block mt-1 w-full" type="password" name="password" required
                 autocomplete="new-password" />
+            <p class="mt-1 text-sm text-gray-500">8文字以上の英数字を組み合わせてください</p>
             <x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
 
@@ -51,7 +53,7 @@
             </a>
 
             <x-primary-button class="ml-4">
-                登録
+                新規登録
             </x-primary-button>
         </div>
     </form>

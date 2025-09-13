@@ -15,7 +15,7 @@ class ProgramCheck extends Model
     ];
 
     protected $casts = [
-        'checked_at' => 'date',
+        'checked_at' => 'datetime',
     ];
 
     public function user(): BelongsTo
