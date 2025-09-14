@@ -1,0 +1,69 @@
+services:
+  - type: web
+    name: ns-app
+    env: docker
+    region: singapore
+    plan: free
+    healthCheckPath: /
+    buildCommand: docker build -t ns-app .
+    startCommand: docker run -p 80:80 ns-app
+    envVars:
+      - key: APP_NAME
+        value: StepNurse
+      - key: APP_ENV
+        value: production
+      - key: APP_KEY
+        sync: false
+      - key: APP_DEBUG
+        value: false
+      - key: APP_URL
+        fromService:
+          name: ns-app
+          type: web
+          property: host
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: LOG_LEVEL
+        value: error
+      - key: DB_CONNECTION
+        value: mysql
+      - key: DB_HOST
+        fromDatabase:
+          name: ns-app-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: ns-app-db
+          property: port
+      - key: DB_DATABASE
+        fromDatabase:
+          name: ns-app-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: ns-app-db
+          property: username
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: ns-app-db
+          property: password
+      - key: BROADCAST_DRIVER
+        value: log
+      - key: CACHE_DRIVER
+        value: file
+      - key: FILESYSTEM_DISK
+        value: local
+      - key: QUEUE_CONNECTION
+        value: database
+      - key: SESSION_DRIVER
+        value: database
+      - key: SESSION_LIFETIME
+        value: "120"
+      - key: VITE_APP_NAME
+        value: StepNurse
+
+databases:
+  - name: ns-app-db
+    plan: free
+    region: singapore
+    ipAllowList: []
