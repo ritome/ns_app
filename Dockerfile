@@ -1,27 +1,35 @@
 FROM richarvey/nginx-php-fpm:latest
 
-# Install Node.js and npm using specific repository
-RUN apk add --update --no-cache \
+# Install system dependencies
+RUN apk add --no-cache \
     git \
-    && apk add --no-cache --repository http://dl-cdn.alpinelinux.org/alpine/v3.18/main/ \
+    zip \
+    unzip \
     nodejs \
     npm
+
+# PHP Extensions
+RUN docker-php-ext-install pdo pdo_mysql
+
+# Configure PHP
+RUN echo "memory_limit=2G" > /usr/local/etc/php/conf.d/memory-limit.ini
 
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy composer files first to leverage Docker cache
+# Install composer dependencies
 COPY composer.json composer.lock ./
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+RUN composer install --no-dev --no-scripts --no-autoloader --no-interaction
 
-# Copy package files
-COPY package.json package-lock.json ./
-RUN npm ci --legacy-peer-deps
-
-# Copy the rest of the application code
+# Copy application files
 COPY . .
 
-# Build assets
+# Generate optimized autoload files
+RUN composer dump-autoload --optimize --no-dev
+
+# Install and build frontend assets
+COPY package.json package-lock.json ./
+RUN npm ci --legacy-peer-deps
 RUN npm run build
 
 # Set permissions
@@ -42,6 +50,6 @@ ENV LOG_CHANNEL=stderr
 ENV COMPOSER_ALLOW_SUPERUSER=1
 
 # Create storage link
-RUN php artisan storage:link
+RUN php artisan storage:link || true
 
 CMD ["/start.sh"]

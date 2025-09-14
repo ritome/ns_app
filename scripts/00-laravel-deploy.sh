@@ -13,19 +13,21 @@ chmod -R 755 /var/www/html/bootstrap/cache
 # .envファイルが存在しない場合は作成
 if [ ! -f "/var/www/html/.env" ]; then
     echo "📝 Creating .env file..."
-    cp /var/www/html/.env.example /var/www/html/.env
+    touch /var/www/html/.env
 fi
 
 echo "🔑 Generating application key..."
 php artisan key:generate --force
 
 echo "📦 Installing Composer dependencies..."
-composer install --no-dev --optimize-autoloader --no-interaction
+COMPOSER_MEMORY_LIMIT=-1 composer install --no-dev --optimize-autoloader --no-interaction
 
 echo "🔄 Running database migrations..."
 php artisan migrate --force
 
 echo "📝 Caching configurations..."
+php artisan config:clear
+php artisan cache:clear
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
@@ -34,7 +36,7 @@ echo "⚡ Publishing Livewire assets..."
 php artisan livewire:publish --assets
 
 echo "🔗 Creating storage link..."
-php artisan storage:link
+php artisan storage:link || true
 
 echo "✨ Optimizing application..."
 php artisan optimize
