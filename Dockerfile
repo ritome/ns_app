@@ -1,11 +1,11 @@
 FROM richarvey/nginx-php-fpm:latest
 
-# Install Node.js and npm
+# Install Node.js and npm using specific repository
 RUN apk add --update --no-cache \
-    nodejs \
-    npm \
     git \
-    && npm install -g npm@latest
+    && apk add --no-cache --repository http://dl-cdn.alpinelinux.org/alpine/v3.18/main/ \
+    nodejs \
+    npm
 
 # Set working directory
 WORKDIR /var/www/html
@@ -16,7 +16,7 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction
 
 # Copy package files
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 # Copy the rest of the application code
 COPY . .
