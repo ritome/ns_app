@@ -1,16 +1,11 @@
+# richarvey/nginx-php-fpmをベースとする
 FROM richarvey/nginx-php-fpm:latest
 
 # Install Node.js and npm
-RUN apk add --update nodejs npm
+RUN apk add --no-cache nodejs npm
 
 # Copy project files
 COPY . .
-
-# Install composer dependencies
-RUN composer install --no-dev
-
-# Install npm dependencies and build assets
-RUN npm install && npm run build
 
 # Image config
 ENV SKIP_COMPOSER 1
@@ -23,9 +18,8 @@ ENV REAL_IP_HEADER 1
 ENV APP_ENV production
 ENV APP_DEBUG false
 ENV LOG_CHANNEL stderr
-ENV COMPOSER_ALLOW_SUPERUSER 1
 
-# Optimize Laravel
-RUN php artisan optimize
+# Allow composer to run as root
+ENV COMPOSER_ALLOW_SUPERUSER 1
 
 CMD ["/start.sh"]

@@ -24,6 +24,9 @@ Route::get('/', function () {
 });
 
 Route::middleware(['auth'])->group(function () {
+    // プログラムスケジュール
+    Route::get('/program-schedule', [ProgramScheduleController::class, 'index'])
+        ->name('program-schedule');
     // ダッシュボード
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
