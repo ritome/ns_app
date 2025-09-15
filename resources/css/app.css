@@ -1,3 +1,24 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ロゴのスタイル */
+.logo-primary {
+    @apply text-indigo-600;
+}
+
+.logo-hover {
+    @apply hover:text-indigo-800 transition-colors duration-200;
+}
+
+/* ナビゲーションバーのスタイル */
+.nav-container {
+    @apply bg-white shadow-sm;
+}
+
+/* その他のカスタムスタイル */
+.step-nurse-theme {
+    --primary-color: #4F46E5;
+    --secondary-color: #818CF8;
+    --accent-color: #6366F1;
+}
