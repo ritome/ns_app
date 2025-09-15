@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProgramCheckController;
+use App\Http\Controllers\ProgramScheduleController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\DailyNoteController;
 use App\Http\Controllers\ProfileController;
@@ -26,6 +27,10 @@ Route::middleware(['auth'])->group(function () {
     // ダッシュボード
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
+
+    // 育成プログラム表
+    Route::get('/program-schedule', [ProgramScheduleController::class, 'index'])
+        ->name('program-schedule');
 
     // プロフィール
     Route::get('/profile', [ProfileController::class, 'edit'])
