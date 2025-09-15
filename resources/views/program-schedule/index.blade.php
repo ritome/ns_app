@@ -12,7 +12,7 @@
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
                     <h2 class="text-xl font-bold mb-6 text-center">みちのく療育園メディカルセンター 看護部看護課 新人看護職員育成プログラム</h2>
-                    
+
                     <div class="overflow-x-auto">
                         <table class="w-full border-collapse border border-gray-300 table-fixed">
                             <thead>
@@ -363,10 +363,21 @@
 
     <style>
         @media print {
-            .py-12 { padding: 0; }
-            .shadow-sm { box-shadow: none; }
-            .bg-gray-100 { background-color: #f3f4f6 !important; }
-            @page { size: landscape; }
+            .py-12 {
+                padding: 0;
+            }
+
+            .shadow-sm {
+                box-shadow: none;
+            }
+
+            .bg-gray-100 {
+                background-color: #f3f4f6 !important;
+            }
+
+            @page {
+                size: landscape;
+            }
         }
     </style>
 @endsection
