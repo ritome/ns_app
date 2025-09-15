@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Routing\UrlGenerator;
 use Livewire\Volt\Volt;
 
 class AppServiceProvider extends ServiceProvider
@@ -12,10 +13,13 @@ class AppServiceProvider extends ServiceProvider
         //
     }
 
-    public function boot(): void
+    public function boot(UrlGenerator $url): void
     {
-        Volt::mount([
-            resource_path('views/livewire'),
-        ]);
+        // Volt::mount([
+        //     resource_path('views/livewire'),
+        // ]);
+        if (env('APP_ENV') === 'production') {
+            $url->forceScheme('https');
+        }
     }
 }

@@ -6,7 +6,7 @@
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
                     <a href="{{ route('dashboard') }}">
-                        <x-application-logo class="block h-9 w-auto fill-current text-gray-800" />
+                        <x-application-logo />
                     </a>
                 </div>
 
@@ -96,6 +96,18 @@
 
             <x-responsive-nav-link :href="route('program-schedule')" :active="request()->routeIs('program-schedule')">
                 {{ __('育成プログラム表') }}
+            </x-responsive-nav-link>
+
+            <x-responsive-nav-link :href="route('program-checks.index')" :active="request()->routeIs('program-checks.*')">
+                {{ __('チェックリスト') }}
+            </x-responsive-nav-link>
+
+            <x-responsive-nav-link :href="route('reviews.index')" :active="request()->routeIs('reviews.*')">
+                {{ __('振り返りシート') }}
+            </x-responsive-nav-link>
+
+            <x-responsive-nav-link :href="route('daily-notes.index')" :active="request()->routeIs('daily-notes.*')">
+                {{ __('日々の振り返り') }}
             </x-responsive-nav-link>
         </div>
 

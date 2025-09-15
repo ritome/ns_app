@@ -31,6 +31,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
 
+    // 育成プログラム表
+    Route::get('/program-schedule', [ProgramScheduleController::class, 'index'])
+        ->name('program-schedule');
+
     // プロフィール
     Route::get('/profile', [ProfileController::class, 'edit'])
         ->name('profile.edit');

@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
-echo "Running composer"
+echo "Running composer..."
 composer install --no-dev --working-dir=/var/www/html
+
+echo "Generating application key..."
+php artisan key:generate --force
+
+echo "Running npm..."
 npm install
 npm run build
 
@@ -15,3 +20,6 @@ php artisan migrate --force
 
 echo "Publishing Livewire assets..."
 php artisan livewire:publish --assets
+
+echo "Optimizing application..."
+php artisan optimize
